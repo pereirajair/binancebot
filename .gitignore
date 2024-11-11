@@ -1,0 +1,7 @@
+.env
+.env_production
+
+node_modules/
+data/
+models/
+old/

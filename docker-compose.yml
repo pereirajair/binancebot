@@ -1,0 +1,34 @@
+version: "2"
+services:
+    bot:
+        image: node:20  
+        working_dir: /usr/src/app
+        volumes:
+            - ./bot:/usr/src/app
+        env_file: .env
+        entrypoint: npm run start
+        #command: npm run start
+        networks:
+            - ai-network
+
+    ai:
+        platform: linux/amd64
+        build:
+            context: ./
+        container_name: ai
+        command: "/bin/bash"
+        # command: "/var/www/run_dev.sh"
+        restart: unless-stopped
+        tty: true
+        working_dir: /var/www
+        env_file: .env
+        ports:
+            - "5001:5000"
+        volumes:
+            - ./ai:/var/www
+            - ./data:/var/data
+        networks: 
+            - ai-network
+networks:
+    ai-network:
+        driver: bridge

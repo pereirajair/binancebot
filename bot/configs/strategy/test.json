@@ -1,0 +1,26 @@
+{
+
+    "proffit": 0.001,
+    "stop_loss1": -0.01,
+    "stop_loss2": -0.015, 
+    "stop_loss3": -0.02, 
+    "stop_loss4": -0.025, 
+
+    "buy_difference" : 300,
+    "sell_difference" : 300,
+    "stop_loss_difference" : 1000,
+
+    "buy_max_wait" : 15,
+    "sell_max_wait" : 800,
+    "stop_loss_max_wait" : 800,
+
+    "capital": 100,
+
+    "auto_capital": 1,
+    "auto_capital_divisor" : 2,
+    "auto_sell" : 1,
+
+    "timer1": "* * * * *",
+    "timer2": "*/15 * * * *",
+    "timer3": "0 8 * * *"
+}
