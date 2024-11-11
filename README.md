@@ -40,10 +40,10 @@ cd /scripts
 This script will generate an OHLC file in data/finance, will generate graphs bellow based on historical data.
 
 #### BUY GRAPH
-![image](./images/buy.png)
+![image](./images/buy.jpg)
 
 #### SELL GRAPH
-![image](./images/sell.png)
+![image](./images/sell.jpg)
 
 The AI model is trained in Tensorflow, based on the images generated, and when the bot needs a decision if should buy or sell, just generates the actual graph and call the neural network to see the prediction.
 
