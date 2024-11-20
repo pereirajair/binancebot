@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 
-const Binance = require('node-binance-api');
+const Binance = require('binance-api-node').default
 let moment = require('moment');
 const yargs = require('yargs');
 const fs = require('node:fs');
@@ -22,17 +22,18 @@ const argv = yargs
     .option('coin', {
         alias: 'c',
         description: 'The COIN PAIR config filename to load.',
-        default: 'ETHBRL',
+        default: 'BTCBRL',
         type: 'string',
     })
     .help()
     .alias('help', 'h')
     .argv;
 
-const binance = new Binance().options({
-    APIKEY: process.env.BINANCE_APIKEY,
-    APISECRET: process.env.BINANCE_APISECRET
-  });
+const binance = Binance({
+    apiKey: process.env.BINANCE_APIKEY,
+    apiSecret: process.env.BINANCE_APISECRET
+});
+
 
 let format = function(value, precision) {
     var precision = precision || 0,
@@ -48,52 +49,35 @@ let format = function(value, precision) {
     return Number.parseFloat(result);
 };
 
-let _startTime = moment().subtract(argv.months,'months').unix();
-let _maxTime = moment().unix();
+var _startTime = moment().subtract(argv.months,'months').unix();
+var _maxTime = moment().subtract(1,'day').unix();
 
+_startTime = _startTime * 1000;
+_maxTime = _maxTime * 1000;
 
-console.log('MAXTIME:');
-console.log(_maxTime);
 let i = 0;
 
 async function requestCandles(_startTime, _maxTime) {
-    // var file_content = '';
-    // var filePath = '../data/finance/' + argv.coin + '.csv';
-    // if (fs.existsSync(filePath)) { 
-    //     fs.unlinkSync(filePath);
-    // }
-    
-    await binance.candlesticks(argv.coin, argv.interval, (error, ticks, symbol) => {
-        let _lastTime = _startTime;
-        var line = '';
-        function logArrayElements(element, index, array) {
-    
-            let last_tick = array[index];
-            let [time, open, high, low, close, volume, closeTime, assetVolume, trades, buyBaseVolume, buyAssetVolume, ignored] = last_tick;
-            
-            // console.log(time + ',' + format(open,2) + ',' + format(high,2) + ',' + format(low,2) + ',' + format(close,2) + ',' + format(volume,2) )
-            // line =  time + ',' + format(open,2) + ',' + format(high,2) + ',' + format(low,2) + ',' + format(close,2) + ',' + format(volume,2) + '\n';
 
-            // fs.appendFile(filePath, line, (erro) => {
-            //     if (erro) {
-            //       console.error('Erro ao adicionar linha:', erro);
-            //       return;
-            //     }
-            //   });
+    var ticks = await binance.candles({ symbol: argv.coin, interval : argv.interval, startTime: _startTime, limit: 1000 });
+    function logTicks(ticks) {
 
-            _lastTime = time;
-            console.log('LAST:');
-            console.log(_lastTime);
-            return _lastTime;
+        var lastTime;
+
+        for (var index in ticks) {
+            let tick = ticks[index];
+            console.log(tick.openTime + ',' + format(tick.open,2) + ',' + format(tick.high,2) + ',' + format(tick.low,2) + ',' + format(tick.close,2) + ',' + format(tick.volume,2) )
+            lastTime = tick.openTime
         }
-        ticks.forEach(_lastTime = logArrayElements);
 
-        if (_lastTime < _maxTime) {
-            requestCandles(_lastTime,_maxTime);
-        }
-    }, 
-        {limit: 1000, startTime: _startTime  
-    });
+        return lastTime;
+    }
+
+    var last = logTicks(ticks);
+    
+    if (last < _maxTime) {
+        requestCandles(last,_maxTime);
+    }
 
 }
 

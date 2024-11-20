@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 cd ./data/train/buy
 QTDBUY=$(ls -l | wc -l)
 TEMPTEST=$(echo |awk "{ print int($QTDBUY*0.2)}")

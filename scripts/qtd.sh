@@ -1,27 +1,19 @@
 #!/bin/bash
 
-
-cd ./data/train/buy
-QTDBUY=$(ls -l | wc -l)
+QTDBUY=$(ls -l ./data/train/buy | wc -l)
 echo "BUY: $QTDBUY"
 
-cd ../../../data/train/sell
-QTDSELL=$(ls -l | wc -l)
+QTDSELL=$(ls -l ./data/train/sell | wc -l)
 echo "SELL: $QTDSELL"
 
-cd ../../../data/train/wait
-QTDWAIT=$(ls -l | wc -l)
+QTDWAIT=$(ls -l ./data/train/wait | wc -l)
 echo "WAIT: $QTDWAIT"
 
-
-cd ../../../data/test/buy
-QTDTESTBUY=$(ls -l | wc -l)
+QTDTESTBUY=$(ls -l ./data/test/buy | wc -l)
 echo "TEST BUY: $QTDTESTBUY"
 
-cd ../../../data/test/sell
-QTDTESTSELL=$(ls -l | wc -l)
+QTDTESTSELL=$(ls -l ./data/test/sell | wc -l)
 echo "TEST SELL: $QTDTESTSELL"
 
-cd ../../../data/test/wait
-QTDTESTWAIT=$(ls -l | wc -l)
+QTDTESTWAIT=$(ls -l ./data/test/wait | wc -l)
 echo "TEST WAIT: $QTDTESTWAIT"
