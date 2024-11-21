@@ -94,28 +94,7 @@ def predict(file):
     print(result[1])
     print(result[2])
 
-    answer = 'wait'
-    
-    if result[0] > result[1] and result[0] > result[2]:
-        answer = 'buy'
-
-    if result[1] > result[0] and result[1] > result[2]:
-        answer = 'sell'
-
-    if result[2] > result[0] and result[2] > result[1]:
-        answer = 'wait'
-
-    # if result[0] > result[1]:
-    #     if result[0] > 7:
-    #         answer = 'buy'
-    #     else:
-    #         answer = 'sell'
-    # else:
-    #     if result[1] > 7:
-    #         answer = 'sell'
-    #     else:
-    #         answer = 'buy'
-    return answer
+    return result
 
 
 @app.route('/', methods=['POST', 'GET','OPTIONS'])
@@ -132,69 +111,22 @@ def index():
 
     filename_15min = predict_dir + symbol + '-15min.jpg'
     livegraph(filename_15min,symbol,Client.KLINE_INTERVAL_15MINUTE, "3 hours ago UTC")
-    result_15min = predict(filename_15min) 
-    return {'symbol': symbol, 'result': result_15min }
+    result = predict(filename_15min) 
+
+    answer = 'wait'
+    
+    if result[0] > result[1] and result[0] > result[2]:
+        answer = 'buy'
+
+    if result[1] > result[0] and result[1] > result[2]:
+        answer = 'sell'
+
+    if result[2] > result[0] and result[2] > result[1]:
+        answer = 'wait'
+
+
+    return {'symbol': symbol, 'result': answer, 'buy' : result[0], 'sell' : result[1], 'wait' : result[2] }
 
 if __name__=="__main__":
     app.run(host='0.0.0.0',threaded=False, port=5001)
-
-
-
-# app = Flask(__name__)
-# api = Api(app)
-
-# app.config['CORS_HEADERS'] = 'Content-Type'
-
-# class HelloWorld(Resource):
-#     def get(self):
-#         from tensorflow.keras.preprocessing.image import ImageDataGenerator, load_img, img_to_array
-#         from tensorflow.keras.models import Sequential, load_model
-
-#         symbol = request.args.get('symbol')
-#         if symbol == "":
-#             symbol = "BTCBUSD"
-
-#         if symbol is None:
-#             symbol = "BTCBUSD"
-
-#         filename_5min = predict_dir + symbol + '-5min.jpg'
-#         filename_hour = predict_dir + symbol + '-hour.jpg'
-#         filename_day = predict_dir + symbol + '-day.jpg'
-#         filename_week = predict_dir + symbol + '-week.jpg'
-#         # livegraph(filename_5min,symbol,Client.KLINE_INTERVAL_5MINUTE, "1 hours ago UTC")
-#         livegraph(filename_hour,symbol,Client.KLINE_INTERVAL_1HOUR, "12 hours ago UTC")
-#         # livegraph(filename_day,symbol,Client.KLINE_INTERVAL_1DAY, "12 days ago UTC")
-#         # livegraph(filename_week,symbol,Client.KLINE_INTERVAL_1WEEK, "12 weeks ago UTC")
-#         # result_5min = predict(filename_5min)
-#         # result_day = predict(filename_day)
-#         result_hour = predict(filename_hour)
-#         # result_week = predict(filename_week)
-#         # return {'symbol': symbol, 'result': result_hour, '5min': result_5min, 'day' : result_day, 'hour' : result_hour, 'week' : result_week }
-#         return {'symbol': symbol, 'result': result_hour }
-
-
-
-# class Backtest(Resource):
-#     def get(self):
-#         import btestcalc
-#         resultbacktest = btestcalc.backtest()
-        
-#         return resultbacktest
-
-# api.add_resource(HelloWorld, '/')
-# api.add_resource(Backtest, '/backtest')
-
-# if __name__ == '__main__':
-#     app.run(host='0.0.0.0',threaded=False)
-
-# import btestcalc
-
-
-
-# @app.route('/api/backtest', methods=['POST', 'GET','OPTIONS'])
-# @cross_origin(supports_credentials=True)
-# def backtest():
-#     importlib.reload(btestcalc)
-#     resultbacktest = btestcalc.backtest()
-#     return resultbacktest
 
