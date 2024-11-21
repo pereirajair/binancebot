@@ -125,7 +125,7 @@ def index():
         answer = 'wait'
 
 
-    return {'symbol': symbol, 'result': answer, 'buy' : result[0], 'sell' : result[1], 'wait' : result[2] }
+    return {'symbol': symbol, 'result': answer, 'buy' : str(result[0]), 'sell' : str(result[1]), 'wait' : str(result[2]) }
 
 if __name__=="__main__":
     app.run(host='0.0.0.0',threaded=False, port=5001)
