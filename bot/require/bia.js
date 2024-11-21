@@ -505,9 +505,16 @@ const bia = {
             let response = await bia.getAIDecision(bia.symbol);
             let decision = response.data;
             bia.lastAIdecision = decision.result;
-            bia.lastAIdecision = 'buy';
-            if (bia.lastAIdecision == 'buy') {  
+            if (decision.result == 'buy') {  
                 bia.callStatus('create_buy');  
+            }
+        }
+        if ((bia.paused == false) &&  (bia.purchased == true)) {
+            let response = await bia.getAIDecision(bia.symbol);
+            let decision = response.data;
+            bia.lastAIdecision = decision.result;
+            if (decision.result == 'sell') {  
+                await bia.createSellOrder(bia.coinPrice,'stop_loss_4');
             }
         }
     },

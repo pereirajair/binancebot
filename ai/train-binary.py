@@ -56,9 +56,9 @@ DIR = '../data/test/sell/'
 qtdtestsell = len([name for name in os.listdir(DIR) if os.path.isfile(os.path.join(DIR, name))])
 
 DIR = '../data/train/wait/'
-qtdwait = len([name for name in os.listdir(DIR) if os.path.isfile(os.path.join(DIR, name))])
+qtdwait = 0 #len([name for name in os.listdir(DIR) if os.path.isfile(os.path.join(DIR, name))])
 DIR = '../data/test/wait/'
-qtdtestwait = len([name for name in os.listdir(DIR) if os.path.isfile(os.path.join(DIR, name))])
+qtdtestwait = 0 #len([name for name in os.listdir(DIR) if os.path.isfile(os.path.join(DIR, name))])
 
 
 nb_train_samples = qtdbuy + qtdsell + qtdtestbuy + qtdwait + qtdtestwait + qtdtestsell 
@@ -66,8 +66,6 @@ nb_validation_samples = qtdtestbuy + qtdtestsell + qtdtestwait
 print(nb_train_samples)
 print(nb_validation_samples)
 
-# nb_train_samples = 413
-# nb_validation_samples = 81
 nb_filters1 = 32
 nb_filters2 = 32
 nb_filters3 = 64
@@ -76,7 +74,7 @@ conv2_size = 2
 conv3_size = 5
 pool_size = 2
 # We have 2 classes, buy and sell 
-classes_num = 3
+classes_num = 2
 batch_size = 32
 lr = 0.001
 chanDim =3
