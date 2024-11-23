@@ -14,11 +14,11 @@ pyparsing
 python-dateutil
 PyYAML
 scipy
-six==1.12.0
+six
 tensorboard
 tensorflow==2.16.1
 tensorflow-estimator
-termcolor==1.1.0
+termcolor
 Werkzeug
 wrapt
 python-binance 
@@ -27,3 +27,4 @@ flask
 flask_restful 
 python-dotenv 
 mplfinance
+scikit-learn

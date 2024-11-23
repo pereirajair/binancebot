@@ -21,13 +21,15 @@ import importlib
 
 load_dotenv()
 
+tf.data.experimental.enable_debug_mode()
+
 predict_dir = '../data/predict/'
 api_key = os.getenv('BINANCE_APIKEY') 
 api_secret = os.getenv('BINANCE_SECRET') 
 api_symbol = os.getenv('SYMBOL')
 model_path = './models/' + api_symbol + '.h5'
 weights_path = './models/' + api_symbol + '.weights.h5'
-os.environ["TF_USE_LEGACY_KERAS"]="1"
+# os.environ["TF_USE_LEGACY_KERAS"]="1"
 
 app=Flask(__name__)
 CORS(app, support_credentials=True)

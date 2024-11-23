@@ -113,7 +113,7 @@ const orders = {
         var options = {};
         if (type == 'STOP_LOSS_LIMIT') {
             _stopPrice = price;
-            _sellPrice = price - 5;
+            _sellPrice = price - 20;
 
             options = {
                 symbol: symbol,
@@ -139,7 +139,8 @@ const orders = {
         }
 
         let _order = await this.exchange.order(options).catch(error => { 
-            this.client.logger.error(error);
+            // this.client.logger.error(error);
+            console.log(error);
             return false;
         });
 
@@ -217,23 +218,25 @@ const orders = {
             let order = this.created_orders[index];
             console.log(order);
             this.created_orders[index].statusChanged = false;
-            if ((order.status != 'REMOVED') && (order.status != 'CANCELED') && (order.status != 'FILLED')) {
+            if (order.symbol != undefined) {
+                if ((order.status != 'REMOVED') && (order.status != 'CANCELED') && (order.status != 'FILLED')) {
 
-                let orderStatus = await this.exchange.getOrder({
-                  symbol: order.symbol,
-                  orderId: order.orderId,
-                });
+                    let orderStatus = await this.exchange.getOrder({
+                    symbol: order.symbol,
+                    orderId: order.orderId,
+                    });
 
-                console.log(orderStatus);
+                    console.log(orderStatus);
 
-                if (orderStatus.status != order.status) {
-                    order.status = orderStatus.status;
-                    order.statusChanged = true;
-                    this.created_orders[index] = order;
-                    _changedOrders.push(this.created_orders[index]);
+                    if (orderStatus.status != order.status) {
+                        order.status = orderStatus.status;
+                        order.statusChanged = true;
+                        this.created_orders[index] = order;
+                        _changedOrders.push(this.created_orders[index]);
 
-                    console.log("CHANGED:");
-                    console.log(_changedOrders);
+                        console.log("CHANGED:");
+                        console.log(_changedOrders);
+                    }
                 }
             }
         }

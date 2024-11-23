@@ -217,6 +217,20 @@ const bot = {
         await this.bia.runTimer3();
     },
 
+    cmdTestSell: async function() {
+        this.bia.test = true;
+        this.bia.testDecision = { data: { result: 'sell' } } ;
+        await this.bia.runTimer1();
+        await this.bia.runTimer2();
+    },
+
+    cmdTestBuy: async function() {
+        this.bia.test = true;
+        this.bia.testDecision = { data: { result: 'buy' } } ;
+        await this.bia.runTimer1();
+        await this.bia.runTimer2();
+    },
+
     cmdPause: function(bot,msg) {
         this.bia.paused = true;
         this.bia.sendMessage('BOT PAUSED.');
@@ -495,18 +509,18 @@ const bot = {
                 that.cmdRunTimers();  
             }
         });
-        // this.telegram.onText(/\/run1/, function onMessageText(msg) {
-        //     if (that.checkFromId(msg)) {
-        //         console.log('/run1 command:');
-        //         that.bia.cmdRunTimer1();         
-        //     }
-        // });
-        // this.telegram.onText(/\/run2/, function onMessageText(msg) {
-        //     if (that.checkFromId(msg)) {
-        //         console.log('/run1 command:');
-        //         that.bia.cmdRunTimer2();         
-        //     }
-        // });
+        this.telegram.onText(/\/testbuy/, function onMessageText(msg) {
+            if (that.checkFromId(msg)) {
+                console.log('/testbuy command:');
+                that.cmdTestBuy();         
+            }
+        });
+        this.telegram.onText(/\/testsell/, function onMessageText(msg) {
+            if (that.checkFromId(msg)) {
+                console.log('/testsell command:');
+                that.cmdTestSell();         
+            }
+        });
 
         this.telegram.onText(/\/help/, function onMessageText(msg) {
             if (that.checkFromId(msg)) {

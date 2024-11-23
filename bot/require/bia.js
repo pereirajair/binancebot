@@ -42,6 +42,9 @@ const bia = {
     symbol: 'ETHBRL',
     status: 'none',
 
+    test: false,
+    testDecision: 'buy',
+
     qtdWaitSell : 0,
     qtdWaitBuy: 0,
     qtdWaitStopLoss: 0,
@@ -62,6 +65,9 @@ const bia = {
         bia.startDate = moment().subtract(1,'day');
 
         bia.load('default');
+
+        bia.totalamount = 0;
+        bia.avgPrice = 0;
 
         bia.setupTimers(_options);
         bia.runTimer1();
@@ -115,10 +121,14 @@ const bia = {
     },
     getAIDecision: async function(_symbol) {
         bia.log('bia.getAIDecision()');
-        let _options = {};
-        _options.url = process.env.AI_API_URL + '/?symbol=' + _symbol;
-        _options.method = 'GET';
-        return axios(_options);
+        if (bia.test == false) {
+            let _options = {};
+            _options.url = process.env.AI_API_URL + '/?symbol=' + _symbol;
+            _options.method = 'GET';
+            return axios(_options);
+        } else {
+            return bia.testDecision;
+        }
     },
     syncPrices: async function() {
         bia.log('bia.syncPrices()');
@@ -196,6 +206,9 @@ const bia = {
             if (bia.symbol == 'ETHBRL') {
                 _capital = coin.format(Number.parseFloat(bia.brl) / bia.options.auto_capital_divisor,2);
             }
+            if (bia.symbol == 'BTCBRL') {
+                _capital = coin.format(Number.parseFloat(bia.brl) / bia.options.auto_capital_divisor,2);
+            }
             bia.setOption('capital',_capital);
         }
         // if (bia.symbol == 'BTCBUSD') {
@@ -240,11 +253,13 @@ const bia = {
 
                 bia.status = 'wait_sell';
                 
-                if ((coinPrice - bia.avgPrice) <= 150) {
-                    bia.sellOrderPrice = bia.avgPrice + 50;
-                } else {
-                    bia.sellOrderPrice = ((coinPrice + bia.avgPrice) / 2);
-                }
+                // if ((coinPrice - bia.avgPrice) <= 150) {
+                //     bia.sellOrderPrice = bia.avgPrice + 50;
+                // } else {
+                //     bia.sellOrderPrice = ((coinPrice + bia.avgPrice) / 2);
+                // }
+
+                // bia.sellOrderPrice = bia.coinPrice - bia.
                 _type = "STOP_LOSS_LIMIT";
                 
             }
@@ -403,7 +418,13 @@ const bia = {
         if (bia.purchased == true) {
             if (bia.status == 'create_sell') {
 
-                if ((bia.coinPrice >= bia.avgPrice) && (bia.coinPrice >= bia.sellPrice)) {
+                    let response = await bia.getAIDecision(bia.symbol);
+                    let decision = response.data;
+                    bia.lastAIdecision = decision.result;
+                    if (decision.result == 'sell') {  
+                        // await bia.createSellOrder(bia.coinPrice,'stop_loss_4');
+                    // }
+                // if ((bia.coinPrice >= bia.avgPrice) && (bia.coinPrice >= bia.sellPrice)) {
 
                     bia.sellOrderPrice = coin.format(((bia.coinPrice + bia.avgPrice) / 2),2);
 
@@ -419,7 +440,7 @@ const bia = {
                     await bia.sendMessage('<b>CRIANDO ORDEM DE VENDA.</b>');
                     
                 } else {
-                    console.log('WAITING MIN SELL PRICE: ' + bia.sellPrice + ' - ' + bia.coinPrice);
+                    console.log('WAITING DECISION SELL: ' + bia.sellPrice + ' - ' + bia.coinPrice);
                 }
             }
         }
@@ -430,20 +451,20 @@ const bia = {
             bia.qtdWaitSell = bia.qtdWaitSell + 1;
 
             let newSellOrderPrice = coin.format(((bia.coinPrice + bia.buyPrice) / 2),2);
-            if ((bia.coinPrice - bia.avgPrice) <= 30) {
-                newSellOrderPrice = bia.avgPrice + bia.options.sell_difference;
-            } else {
-                newSellOrderPrice = ((coinPrice + bia.avgPrice) / 2);
-            }
+            // if ((bia.coinPrice - bia.avgPrice) <= 30) {
+            //     newSellOrderPrice = bia.avgPrice + bia.options.sell_difference;
+            // } else {
+            //     newSellOrderPrice = ((bia.coinPrice + bia.avgPrice) / 2);
+            // }
 
-            if (newSellOrderPrice > bia.sellOrderPrice) {
+            // if (newSellOrderPrice > bia.sellOrderPrice) {
 
-                bia.sellOrderPrice = newSellOrderPrice;
+                bia.sellOrderPrice = coin.format((bia.coinPrice - bia.options.sell_difference),2);
 
                 //RECREATING SELL ORDER
                 await bia.orders.removeOrderBySignal('sell_order');
                 await bia.createOrder('sell_order','sell',bia.symbol,coin.format(bia.totalamount,bia.precision),bia.sellOrderPrice,"STOP_LOSS_LIMIT");
-            }
+            // }
 
             // if (bia.qtdWaitSell >= bia.options.sell_max_wait) {
             //     await bia.orders.removeOrderBySignal('sell_order');
@@ -474,6 +495,7 @@ const bia = {
 
             bia.status = 'wait_buy';
             bia.qtdWaitBuy = 0;
+            bia.avgPrice = 0;
 
             let _order = await bia.createOrder('buy_order','buy',bia.symbol,bia.amount,bia.buyPrice);
 
@@ -483,7 +505,7 @@ const bia = {
                 _order2 = await bia.createOrder('buy_order_2','buy',bia.symbol,bia.amount,bia.stopLossPrice1);
             }
 
-            bia.sendMessage('<b>CREATING BUY ORDERS.</b><br>' + JSON.stringify(_order) + '<br><br>' + _order2);
+            bia.sendMessage('<b>CREATING BUY ORDERS.</b>' + JSON.stringify(_order) + '' + _order2);
         }
     },
     statusWaitBuy: async function () {
@@ -509,14 +531,14 @@ const bia = {
                 bia.callStatus('create_buy');  
             }
         }
-        if ((bia.paused == false) &&  (bia.purchased == true)) {
-            let response = await bia.getAIDecision(bia.symbol);
-            let decision = response.data;
-            bia.lastAIdecision = decision.result;
-            if (decision.result == 'sell') {  
-                await bia.createSellOrder(bia.coinPrice,'stop_loss_4');
-            }
-        }
+        // if ((bia.paused == false) &&  (bia.purchased == true)) {
+        //     let response = await bia.getAIDecision(bia.symbol);
+        //     let decision = response.data;
+        //     bia.lastAIdecision = decision.result;
+        //     if (decision.result == 'sell') {  
+        //         await bia.createSellOrder(bia.coinPrice,'stop_loss_4');
+        //     }
+        // }
     },
     save: function(_name) {
         bia.log('bia.save()');
@@ -527,8 +549,8 @@ const bia = {
             jsonObj.bnbPrice = this.bnbPrice;
             jsonObj.paused = this.paused;
             jsonObj.amount = this.amount;
-            jsonObj.totalamount = this.totalamount;
-            jsonObj.avgPrice = this.avgPrice;
+            // jsonObj.totalamount = this.totalamount;
+            // jsonObj.avgPrice = this.avgPrice;
             jsonObj.purchased = this.purchased;
             jsonObj.symbol = this.symbol;
             jsonObj.status = this.status;
@@ -579,8 +601,8 @@ const bia = {
                     this.bnbPrice = conf.bnbPrice;
                     this.paused = conf.paused;
                     this.amount = conf.amount;
-                    this.totalamount = conf.totalamount;
-                    this.avgPrice = conf.avgPrice;
+                    // this.totalamount = conf.totalamount;
+                    // this.avgPrice = conf.avgPrice;
                     this.purchased = conf.purchased;
                     this.symbol = conf.symbol;
                     this.status = conf.status;
