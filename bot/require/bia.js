@@ -79,8 +79,8 @@ const bia = {
         }
 
         let exchange = Binance({
-                apiKey: process.env.BINANCE_APIKEY, 
-                apiSecret: process.env.BINANCE_SECRET,
+            apiKey: process.env.BINANCE_APIKEY, 
+            apiSecret: process.env.BINANCE_SECRET,
         })
 
         bia.exchange = exchange;
@@ -223,11 +223,11 @@ const bia = {
         // }
         coin.setCapital(_capital);
         coin.setCoinPrice(bia.buyPrice);
-        bia.sellPrice = coin.format(coin.calculateMinValueForPrice(bia.buyPrice,(bia.options.proffit),2));
-        bia.stopLossPrice1 = coin.format(coin.calculateMinValueForPrice(bia.buyPrice,(bia.options.stop_loss1)),2); // APORTA DUAS VEZES O VALOR INICIAL E TENTA VENDER PELA FIBONACCI 0,382
-        bia.stopLossPrice2 = coin.format(coin.calculateMinValueForPrice(bia.buyPrice,(bia.options.stop_loss2)),2); // CANCELA E TENTA VENDER PELO PREÇO QUE COMPROU SEM PAGAR TAXAS.
-        bia.stopLossPrice3 = coin.format(coin.calculateMinValueForPrice(bia.buyPrice,(bia.options.stop_loss3)),2); // TENTA VENDER PELO PREÇO ATUAL SEM PAGAR TAXAS.
-        bia.stopLossPrice4 = coin.format(coin.calculateMinValueForPrice(bia.buyPrice,(bia.options.stop_loss4)),2); // MARKET SELL E QUARENTENA PORQUE FUDEU.
+        bia.sellPrice = coin.format(coin.calculateMinValueForPrice(bia.buyPrice,(bia.options.proffit),0));
+        bia.stopLossPrice1 = coin.format(coin.calculateMinValueForPrice(bia.buyPrice,(bia.options.stop_loss1)),0); // APORTA DUAS VEZES O VALOR INICIAL E TENTA VENDER PELA FIBONACCI 0,382
+        bia.stopLossPrice2 = coin.format(coin.calculateMinValueForPrice(bia.buyPrice,(bia.options.stop_loss2)),0); // CANCELA E TENTA VENDER PELO PREÇO QUE COMPROU SEM PAGAR TAXAS.
+        bia.stopLossPrice3 = coin.format(coin.calculateMinValueForPrice(bia.buyPrice,(bia.options.stop_loss3)),0); // TENTA VENDER PELO PREÇO ATUAL SEM PAGAR TAXAS.
+        bia.stopLossPrice4 = coin.format(coin.calculateMinValueForPrice(bia.buyPrice,(bia.options.stop_loss4)),0); // MARKET SELL E QUARENTENA PORQUE FUDEU.
         
         bia.amount = coin.getCoinAmount(bia.options.capital,bia.buyPrice,bia.precision);
 
@@ -373,7 +373,7 @@ const bia = {
             }
             if (order.status == 'CANCELED') {
 
-                await bia.removeOrderBySignal('buy_order');
+                await bia.orders.removeOrderBySignal('buy_order');
                 await bia.sendMessage('<b>ORDEM DE COMPRA 2 CANCELADA.</b>');
                 await bia.callStatus('none');
             }
@@ -385,7 +385,7 @@ const bia = {
                 await bia.sendMessage(bot.msgHasBought(order));
             }
             if (order.status == 'CANCELED') {
-                await bia.removeOrderBySignal('buy_order_2');
+                await bia.orders.removeOrderBySignal('buy_order_2');
                 await bia.sendMessage('BUY ORDER REMOVED.');
                 await bia.callStatus('none');  
             }
@@ -436,8 +436,8 @@ const bia = {
                         await bia.orders.removeOrderBySignal('buy_order_2');
                     }
 
-                    await bia.createOrder('sell_order','sell',bia.symbol,coin.format(bia.totalamount,bia.precision),coin.format(bia.sellOrderPrice,2),"STOP_LOSS_LIMIT");
-                    await bia.sendMessage('<b>CRIANDO ORDEM DE VENDA.</b>');
+                    await bia.createOrder('sell_order','sell',bia.symbol,coin.format(bia.totalamount,bia.precision),coin.format(bia.sellOrderPrice,0),"STOP_LOSS_LIMIT");
+                    await bia.sendMessage('<b>CREATING SELL ORDER</b>');
                     
                 } else {
                     console.log('WAITING DECISION SELL: ' + bia.sellPrice + ' - ' + bia.coinPrice);
@@ -505,7 +505,7 @@ const bia = {
                 _order2 = await bia.createOrder('buy_order_2','buy',bia.symbol,bia.amount,bia.stopLossPrice1);
             }
 
-            bia.sendMessage('<b>CREATING BUY ORDERS.</b>' + JSON.stringify(_order) + '' + _order2);
+            bia.sendMessage('<b>CREATING BUY ORDERS.</b>' + JSON.stringify(_order) + '' + JSON.stringify(_order2));
         }
     },
     statusWaitBuy: async function () {
@@ -547,7 +547,7 @@ const bia = {
 
             jsonObj.coinPrice = this.coinPrice;
             jsonObj.bnbPrice = this.bnbPrice;
-            jsonObj.paused = this.paused;
+            // jsonObj.paused = this.paused;
             jsonObj.amount = this.amount;
             // jsonObj.totalamount = this.totalamount;
             // jsonObj.avgPrice = this.avgPrice;
@@ -599,7 +599,7 @@ const bia = {
 
                     this.coinPrice = conf.coinPrice;
                     this.bnbPrice = conf.bnbPrice;
-                    this.paused = conf.paused;
+                    // this.paused = conf.paused;
                     this.amount = conf.amount;
                     // this.totalamount = conf.totalamount;
                     // this.avgPrice = conf.avgPrice;

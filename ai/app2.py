@@ -34,12 +34,65 @@ client = Client(api_key, api_secret)
 img_width, img_height = 150, 150
 
 # Load model
-model = load_model(model_path)
-model.load_weights(weights_path)
+# model = load_model(model_path)
+# model.load_weights(weights_path)
 
 # Function to calculate Simple Moving Average (SMA)
 def convolve_sma(array, period):
     return np.convolve(array, np.ones((period,)) / period, mode='valid')
+
+def detectar_mudancas_filtradas(numeros, fator_comparacao=0.5):
+    resultados = []
+    direcao_atual = None  # "subindo" ou "descendo"
+    inicio_intervalo = 0  # Índice do início da alta ou baixa
+    ultima_quantidade = 0  # Quantidade de números na última direção dominante
+
+    for i in range(1, len(numeros)):
+        if numeros[i] > numeros[i - 1]:  # Está subindo
+            if direcao_atual != "subindo":
+                if direcao_atual == "descendo" and ultima_quantidade * fator_comparacao > (i - inicio_intervalo):
+                    # Ignora subida curta e considera parte da descida
+                    continue
+                # Finaliza a descida anterior
+                if direcao_atual:
+                    resultados.append({
+                        "direcao": direcao_atual,
+                        "inicio": inicio_intervalo,
+                        "fim": i - 1,
+                        "quantidade": i - inicio_intervalo
+                    })
+                    ultima_quantidade = i - inicio_intervalo
+                # Muda a direção para "subindo"
+                direcao_atual = "subindo"
+                inicio_intervalo = i - 1
+        elif numeros[i] < numeros[i - 1]:  # Está descendo
+            if direcao_atual != "descendo":
+                if direcao_atual == "subindo" and ultima_quantidade * fator_comparacao > (i - inicio_intervalo):
+                    # Ignora descida curta e considera parte da subida
+                    continue
+                # Finaliza a subida anterior
+                if direcao_atual:
+                    resultados.append({
+                        "direcao": direcao_atual,
+                        "inicio": inicio_intervalo,
+                        "fim": i - 1,
+                        "quantidade": i - inicio_intervalo
+                    })
+                    ultima_quantidade = i - inicio_intervalo
+                # Muda a direção para "descendo"
+                direcao_atual = "descendo"
+                inicio_intervalo = i - 1
+
+    # Finaliza o último intervalo
+    if direcao_atual:
+        resultados.append({
+            "direcao": direcao_atual,
+            "inicio": inicio_intervalo,
+            "fim": len(numeros) - 1,
+            "quantidade": len(numeros) - inicio_intervalo
+        })
+
+    return resultados
 
 # Function to generate live graph for prediction
 def livegraph(filename, symbol, interval, intstring):
@@ -89,6 +142,12 @@ def livegraph(filename, symbol, interval, intstring):
     dx = fig.add_subplot(111)
     mpf.original_flavor.candlestick2_ochl(dx, open, close, high, low, width=1.5, colorup='g', colordown='r', alpha=0.5)
 
+
+    resultado = detectar_mudancas_filtradas(close,0.80)
+    for r in resultado:
+        print(f"Direção: {r['direcao']}, Início: {r['inicio']}, Fim: {r['fim']}, Quantidade: {r['quantidade']}")
+
+
     plt.autoscale()
     plt.plot(smb, color="blue", linewidth=10, alpha=0.5)
     plt.axis('off')
@@ -100,7 +159,7 @@ def livegraph(filename, symbol, interval, intstring):
     comp_ratio_close = close_last / close_first
 
     decision = 'wait'
-    if (comp_ratio_close >= 1.001):
+    if (comp_ratio_close >= 1.0005):
             decision = 'sell'
     else: 
         if (comp_ratio_close <= 0.999):
@@ -135,7 +194,7 @@ def index():
     symbol = request.args.get('symbol', default="ETHBRL")
 
     filename_15min = predict_dir + symbol + '-15min.jpg'
-    answer = livegraph(filename_15min, symbol, Client.KLINE_INTERVAL_15MINUTE, "3 hours ago UTC")
+    answer = livegraph(filename_15min, symbol, Client.KLINE_INTERVAL_15MINUTE, "6 hours ago UTC")
     # result = predict(filename_15min)
 
     # answer = ''
