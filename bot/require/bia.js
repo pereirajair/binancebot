@@ -418,10 +418,10 @@ const bia = {
         if (bia.purchased == true) {
             if (bia.status == 'create_sell') {
 
-                    let response = await bia.getAIDecision(bia.symbol);
-                    let decision = response.data;
-                    bia.lastAIdecision = decision.result;
-                    if (decision.result == 'sell') {  
+                let response = await bia.getAIDecision(bia.symbol);
+                let decision = response.data;
+                bia.lastAIdecision = decision.result;
+                if (decision.result == 'sell') {  
                         // await bia.createSellOrder(bia.coinPrice,'stop_loss_4');
                     // }
                 // if ((bia.coinPrice >= bia.avgPrice) && (bia.coinPrice >= bia.sellPrice)) {
@@ -450,21 +450,21 @@ const bia = {
         if (bia.status == 'wait_sell') {
             bia.qtdWaitSell = bia.qtdWaitSell + 1;
 
-            let newSellOrderPrice = coin.format(((bia.coinPrice + bia.buyPrice) / 2),2);
-            // if ((bia.coinPrice - bia.avgPrice) <= 30) {
-            //     newSellOrderPrice = bia.avgPrice + bia.options.sell_difference;
-            // } else {
-            //     newSellOrderPrice = ((bia.coinPrice + bia.avgPrice) / 2);
-            // }
+            let newSellOrderPrice = coin.format(((bia.coinPrice + bia.buyPrice) / 2),0);
+            if ((bia.coinPrice - bia.avgPrice) <= 30) {
+                newSellOrderPrice = bia.avgPrice + bia.options.sell_difference;
+            } else {
+                newSellOrderPrice = ((bia.coinPrice + bia.avgPrice) / 2);
+            }
 
-            // if (newSellOrderPrice > bia.sellOrderPrice) {
+            if (newSellOrderPrice > bia.sellOrderPrice) {
 
-                bia.sellOrderPrice = coin.format((bia.coinPrice - bia.options.sell_difference),2);
+                bia.sellOrderPrice = newSellOrderPrice
 
                 //RECREATING SELL ORDER
                 await bia.orders.removeOrderBySignal('sell_order');
-                await bia.createOrder('sell_order','sell',bia.symbol,coin.format(bia.totalamount,bia.precision),bia.sellOrderPrice,"STOP_LOSS_LIMIT");
-            // }
+                await bia.createOrder('sell_order','sell',bia.symbol,coin.format(bia.totalamount,bia.precision),newSellOrderPrice,"STOP_LOSS_LIMIT");
+            }
 
             // if (bia.qtdWaitSell >= bia.options.sell_max_wait) {
             //     await bia.orders.removeOrderBySignal('sell_order');

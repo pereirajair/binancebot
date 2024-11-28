@@ -384,6 +384,7 @@ const bot = {
                 _text = _text + '<b>stop_loss1</b>: ' + that.bia.options.stop_loss1 + '\n';
                 _text = _text + '<b>stop_loss2</b>: ' + that.bia.options.stop_loss2 + '\n';
                 _text = _text + '<b>stop_loss3</b>: ' + that.bia.options.stop_loss3 + '\n';
+                _text = _text + '<b>stop_loss4</b>: ' + that.bia.options.stop_loss4 + '\n';
 
                 _text = _text + "\n<b>BUY/SELL:</b> \n";
                 _text = _text + '<b>buy_difference</b>: ' + that.bia.options.buy_difference + '\n';

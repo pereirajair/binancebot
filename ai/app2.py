@@ -144,9 +144,16 @@ def livegraph(filename, symbol, interval, intstring):
 
 
     resultado = detectar_mudancas_filtradas(close,0.80)
+    penultimo = resultado[len(resultado) - 2]
+    ultimo = resultado[len(resultado) - 1]
     for r in resultado:
         print(f"Direção: {r['direcao']}, Início: {r['inicio']}, Fim: {r['fim']}, Quantidade: {r['quantidade']}")
-
+        print(f"Inicio: {close[r['inicio']]},  Fim: {close[r['fim']]}, Quantidade: {r['quantidade']}")
+        
+    mediaultimo = (close[ultimo['inicio']] + close[ultimo['fim']]) / 2
+    mediapenultimo = (close[penultimo['inicio']] + close[penultimo['fim']]) / 2
+    print(mediaultimo)
+    print(mediapenultimo)
 
     plt.autoscale()
     plt.plot(smb, color="blue", linewidth=10, alpha=0.5)
@@ -159,11 +166,23 @@ def livegraph(filename, symbol, interval, intstring):
     comp_ratio_close = close_last / close_first
 
     decision = 'wait'
-    if (comp_ratio_close >= 1.0005):
-            decision = 'sell'
-    else: 
-        if (comp_ratio_close <= 0.999):
-            decision = 'buy'
+    if (ultimo['quantidade'] > 2) and (penultimo['quantidade'] > 2):
+        if (ultimo['direcao'] == 'subindo'):
+            if ((close_last / mediapenultimo) >= 1.0005):
+                if (mediaultimo >= mediapenultimo): 
+                    decision = 'sell'
+        else:
+            if ((close_last / mediapenultimo)  <= 0.999):
+                if (mediaultimo <= mediapenultimo): 
+                    decision = 'buy'
+
+
+
+    # if (comp_ratio_close >= 1.0005):
+    #         decision = 'sell'
+    # else: 
+    #     if (comp_ratio_close <= 0.999):
+    #         decision = 'buy'
         
     open.clear()
     close.clear()
