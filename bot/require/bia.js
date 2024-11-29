@@ -64,7 +64,7 @@ const bia = {
         bia.sendMessage('BOT CREATED!');
         bia.startDate = moment().subtract(1,'day');
 
-        bia.load('default');
+        bia.load('default_' + bia.symbol);
 
         bia.totalamount = 0;
         bia.avgPrice = 0;
@@ -106,7 +106,7 @@ const bia = {
         if (bia.paused == false) {
            await bia.checkOpenOrders();
            await bia.callStatus();
-           await bia.save('default');
+           await bia.save('default_' + bia.symbol);
        } else {
            console.log("PAUSED");
        }

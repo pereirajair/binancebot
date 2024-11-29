@@ -50,7 +50,9 @@ def detectar_mudancas_filtradas(numeros, fator_comparacao=0.5):
     for i in range(1, len(numeros)):
         if numeros[i] > numeros[i - 1]:  # Está subindo
             if direcao_atual != "subindo":
-                if direcao_atual == "descendo" and ultima_quantidade * fator_comparacao > (i - inicio_intervalo):
+
+                print(f"DESCENDO: VALOR: {ultima_quantidade * fator_comparacao}, ATUAL: {numeros[i]}")
+                if direcao_atual == "descendo" and ultima_quantidade * fator_comparacao > numeros[i]:
                     # Ignora subida curta e considera parte da descida
                     continue
                 # Finaliza a descida anterior
@@ -61,13 +63,14 @@ def detectar_mudancas_filtradas(numeros, fator_comparacao=0.5):
                         "fim": i - 1,
                         "quantidade": i - inicio_intervalo
                     })
-                    ultima_quantidade = i - inicio_intervalo
+                    ultima_quantidade = numeros[i - 1]
                 # Muda a direção para "subindo"
                 direcao_atual = "subindo"
                 inicio_intervalo = i - 1
         elif numeros[i] < numeros[i - 1]:  # Está descendo
             if direcao_atual != "descendo":
-                if direcao_atual == "subindo" and ultima_quantidade * fator_comparacao > (i - inicio_intervalo):
+                print(f"SUBINDO: VALOR: {ultima_quantidade * fator_comparacao}, ATUAL: {numeros[i]}")
+                if direcao_atual == "subindo" and ultima_quantidade * fator_comparacao > numeros[i]:
                     # Ignora descida curta e considera parte da subida
                     continue
                 # Finaliza a subida anterior
@@ -78,7 +81,7 @@ def detectar_mudancas_filtradas(numeros, fator_comparacao=0.5):
                         "fim": i - 1,
                         "quantidade": i - inicio_intervalo
                     })
-                    ultima_quantidade = i - inicio_intervalo
+                    ultima_quantidade = numeros[i - 1]
                 # Muda a direção para "descendo"
                 direcao_atual = "descendo"
                 inicio_intervalo = i - 1
@@ -143,7 +146,7 @@ def livegraph(filename, symbol, interval, intstring):
     mpf.original_flavor.candlestick2_ochl(dx, open, close, high, low, width=1.5, colorup='g', colordown='r', alpha=0.5)
 
 
-    resultado = detectar_mudancas_filtradas(close,0.80)
+    resultado = detectar_mudancas_filtradas(close,0.70)
     penultimo = resultado[len(resultado) - 2]
     ultimo = resultado[len(resultado) - 1]
     for r in resultado:
@@ -166,7 +169,7 @@ def livegraph(filename, symbol, interval, intstring):
     comp_ratio_close = close_last / close_first
 
     decision = 'wait'
-    if (ultimo['quantidade'] > 2) and (penultimo['quantidade'] > 2):
+    if (ultimo['quantidade'] > 2):
         if (ultimo['direcao'] == 'subindo'):
             if ((close_last / mediapenultimo) >= 1.0005):
                 if (mediaultimo >= mediapenultimo): 

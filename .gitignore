@@ -1,6 +1,7 @@
 .env
 .env_production
 
+configs/saved/*.json
 node_modules/
 data/
 models/
