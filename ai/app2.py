@@ -169,15 +169,15 @@ def livegraph(filename, symbol, interval, intstring):
     comp_ratio_close = close_last / close_first
 
     decision = 'wait'
-    if (ultimo['quantidade'] > 2):
-        if (ultimo['direcao'] == 'subindo'):
-            if ((close_last / mediapenultimo) >= 1.0005):
-                if (mediaultimo >= mediapenultimo): 
-                    decision = 'sell'
-        else:
-            if ((close_last / mediapenultimo)  <= 0.999):
-                if (mediaultimo <= mediapenultimo): 
-                    decision = 'buy'
+    # if (ultimo['quantidade'] > 2):
+    if (ultimo['direcao'] == 'subindo'):
+        if ((close_last / mediapenultimo) >= 1.0005):
+            if (mediaultimo >= mediapenultimo): 
+                decision = 'sell'
+    else:
+        if ((close_last / mediapenultimo)  <= 0.999):
+            if (mediaultimo <= mediapenultimo): 
+                decision = 'buy'
 
 
 
