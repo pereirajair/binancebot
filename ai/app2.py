@@ -216,7 +216,7 @@ def index():
     symbol = request.args.get('symbol', default="ETHBRL")
 
     filename_15min = predict_dir + symbol + '-15min.jpg'
-    answer = livegraph(filename_15min, symbol, Client.KLINE_INTERVAL_15MINUTE, "6 hours ago UTC")
+    answer = livegraph(filename_15min, symbol, Client.KLINE_INTERVAL_15MINUTE, "3 hours ago UTC")
     # result = predict(filename_15min)
 
     # answer = ''
