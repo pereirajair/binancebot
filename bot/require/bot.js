@@ -247,9 +247,8 @@ const bot = {
     },
 
     cmdStatus: async function(bot,msg) {
-        let response = await this.bia.getAIDecision(this.bia.symbol);
-        let decision = response.data;
-        this.bia.lastAIdecision = decision.result;
+        let decision = await this.bia.getAIDecision(this.bia.symbol);
+        this.bia.lastAIdecision = decision;
         console.log("AI_DECISION: " + this.bia.lastAIdecision);
         this.bia.sendMessage(this.msgStatus(),{ "parse_mode": "HTML" });
     },

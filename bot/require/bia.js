@@ -39,7 +39,7 @@ const bia = {
     avgPrice: 0,
 
     purchased: false,
-    symbol: 'ETHBRL',
+    symbol: 'BTCBRL',
     status: 'none',
 
     test: false,
@@ -122,13 +122,193 @@ const bia = {
     getAIDecision: async function(_symbol) {
         bia.log('bia.getAIDecision()');
         if (bia.test == false) {
-            let _options = {};
-            _options.url = process.env.AI_API_URL + '/?symbol=' + _symbol;
-            _options.method = 'GET';
-            return axios(_options);
+
+            // let _options = {};
+            // _options.url = process.env.AI_API_URL + '/?symbol=' + _symbol;
+            // _options.method = 'GET';
+            // return axios(_options);
+
+            return await bia.getCalculatedDecision(bia.symbol,bia.averageBuyPrice);
         } else {
             return bia.testDecision;
         }
+    },
+    getCalculatedDecision: async function(symbol,averageBuyPrice) {
+        const endTime = Date.now();
+        const startTime = endTime - 6 * 60 * 60 * 1000; // 3 horas em milissegundos
+
+        const candles = await bia.exchange.candles({
+            symbol: symbol,      
+            interval: '15m',     
+            startTime: startTime,
+            endTime: endTime
+        });
+        
+
+        var closeNumbers = [];
+        var openNumbers = [];
+        var highNumbers = [];
+        var lowNumbers = [];
+
+        var highest = 0;
+        var lowest = candles[0].high * 100;
+
+        for (var i in candles) {
+            closeNumbers.push(parseFloat(candles[i].close));
+            openNumbers.push(parseFloat(candles[i].open));
+            highNumbers.push(parseFloat(candles[i].high));
+            lowNumbers.push(parseFloat(candles[i].low));
+
+            if (candles[i].high > highest) {
+                highest = parseFloat(candles[i].high);
+            }
+
+            if ((candles[i].low) < lowest) {
+                lowest = parseFloat(candles[i].low);
+            }
+
+            console.log(i + ' - ' + candles[i].close);
+        }
+
+        var average = (highest + lowest) / 2;
+        console.log('Highest: ' + highest);
+        console.log('Lowest: ' + lowest);
+        console.log('Average: ' + average);
+
+    
+        const fatorComparacao = 0.8;
+        const resultado = bia.detectUpAndDownTrends(closeNumbers, fatorComparacao);
+        console.log(resultado);
+
+        let penultimo = resultado[resultado.length - 2];
+        let ultimo = resultado[resultado.length - 1];
+
+        var decision = 'wait';
+        if ((ultimo.quantidade >= 2) && (penultimo.quantidade >= 2)) {
+            if (ultimo.direcao == 'subindo') {
+
+                var closeRatio = ultimo.valorFim / penultimo.valorInicio;
+
+                console.log('CloseRatio: ' + closeRatio);
+
+                var fibonacciLevels = bia.calculateFibonacciLevelsWithTrend(penultimo.valorInicio,penultimo.valorFim);
+                console.log(`Fibonacci levels between:`, fibonacciLevels);
+
+                // if (ultimo.valorFim >= averageBuyPrice) {
+                    if (closeRatio >= 1.0005) {
+                        if (ultimo.valorFim >= fibonacciLevels.levels[0]) {
+                            decision = 'sell'
+                        }
+                    }
+                // }
+
+            } else {
+
+                var closeRatio = penultimo.valorInicio / ultimo.valorFim;
+                console.log('CloseRation: ' + closeRatio);
+
+                var fibonacciLevels = bia.calculateFibonacciLevelsWithTrend(penultimo.valorInicio,penultimo.valorFim);
+                console.log(`Fibonacci levels between:`, fibonacciLevels);
+
+                if (closeRatio <= 0.9995) {
+                    if (ultimo.valorFim <= fibonacciLevels.levels[0]) {
+                        decision = 'buy'
+                    }
+                }
+            }
+        }
+        console.log(decision);
+        return decision;
+    },
+    detectUpAndDownTrends: function(numeros, fatorComparacao) {
+        const resultados = [];
+        let direcaoAtual = null; // "subindo" ou "descendo"
+        let inicioIntervalo = 0; // Índice do início da alta ou baixa
+        let ultimaQuantidade = 0; // Quantidade de números na última direção dominante
+    
+        for (let i = 1; i < numeros.length; i++) {
+            if (numeros[i] > numeros[i - 1]) { // Está subindo
+                if (direcaoAtual !== "subindo") {
+                    // console.log(`DESCENDO: VALOR: ${ultimaQuantidade * fatorComparacao}, ATUAL: ${numeros[i]}`);
+                    if (direcaoAtual === "descendo" && ultimaQuantidade * fatorComparacao > numeros[i]) {
+                        // Ignora subida curta e considera parte da descida
+                        continue;
+                    }
+                    // Finaliza a descida anterior
+                    if (direcaoAtual) {
+                        resultados.push({
+                            direcao: direcaoAtual,
+                            inicio: inicioIntervalo,
+                            valorInicio: numeros[inicioIntervalo],
+                            valorFim: numeros[i - 1],
+                            fim: i - 1,
+                            quantidade: i - inicioIntervalo - 1
+                        });
+                        ultimaQuantidade = numeros[i - 1];
+                    }
+                    // Muda a direção para "subindo"
+                    direcaoAtual = "subindo";
+                    inicioIntervalo = i - 1;
+                }
+            } else if (numeros[i] < numeros[i - 1]) { // Está descendo
+                if (direcaoAtual !== "descendo") {
+                    // console.log(`SUBINDO: VALOR: ${ultimaQuantidade * fatorComparacao}, ATUAL: ${numeros[i]}`);
+                    if (direcaoAtual === "subindo" && ultimaQuantidade * fatorComparacao > numeros[i]) {
+                        // Ignora descida curta e considera parte da subida
+                        continue;
+                    }
+                    // Finaliza a subida anterior
+                    if (direcaoAtual) {
+                        resultados.push({
+                            direcao: direcaoAtual,
+                            inicio: inicioIntervalo,
+                            valorInicio: numeros[inicioIntervalo],
+                            valorFim: numeros[i - 1],
+                            fim: i - 1,
+                            quantidade: i - inicioIntervalo - 1
+                        });
+                        ultimaQuantidade = numeros[i - 1];
+                    }
+                    // Muda a direção para "descendo"
+                    direcaoAtual = "descendo";
+                    inicioIntervalo = i - 1;
+                }
+            }
+        }
+    
+        // Finaliza o último intervalo
+        if (direcaoAtual) {
+            resultados.push({
+                direcao: direcaoAtual,
+                inicio: inicioIntervalo,
+                valorInicio: numeros[inicioIntervalo],
+                valorFim: numeros[numeros.length - 1],
+                fim: numeros.length - 1,
+                quantidade: numeros.length - inicioIntervalo - 1
+            });
+        }
+    
+        return resultados;
+    },
+    calculateFibonacciLevelsWithTrend: function(start, end) {
+        // Detect trend
+        const trend = end > start ? "uptrend" : "downtrend";
+    
+        // Calculate Fibonacci levels
+        const difference = Math.abs(end - start);
+        const fibonacciLevels = [0.48, 0.3];
+    
+        // Determine levels based on trend
+        const levels = fibonacciLevels.map(level => {
+            return trend === "uptrend"
+                ? start + level * difference // Levels move up
+                : start - level * difference; // Levels move down
+        });
+    
+        return {
+            trend,
+            levels
+        };
     },
     syncPrices: async function() {
         bia.log('bia.syncPrices()');
@@ -418,10 +598,8 @@ const bia = {
         if (bia.purchased == true) {
             if (bia.status == 'create_sell') {
 
-                let response = await bia.getAIDecision(bia.symbol);
-                let decision = response.data;
-                bia.lastAIdecision = decision.result;
-                if (decision.result == 'sell') {  
+                let decision = await bia.getAIDecision(bia.symbol);
+                if (decision == 'sell') {  
                         // await bia.createSellOrder(bia.coinPrice,'stop_loss_4');
                     // }
                 // if ((bia.coinPrice >= bia.avgPrice) && (bia.coinPrice >= bia.sellPrice)) {
@@ -524,10 +702,9 @@ const bia = {
     statusNone: async function() {
         bia.log('bia.statusNone()');
         if ((bia.paused == false) &&  (bia.purchased == false) && (bia.status == 'none')) {
-            let response = await bia.getAIDecision(bia.symbol);
-            let decision = response.data;
-            bia.lastAIdecision = decision.result;
-            if (decision.result == 'buy') {  
+            let decision = await bia.getAIDecision(bia.symbol);
+            bia.lastAIdecision = decision;
+            if (decision == 'buy') {  
                 bia.callStatus('create_buy');  
             }
         }
