@@ -184,7 +184,7 @@ const bia = {
         let ultimo = resultado[resultado.length - 1];
 
         var decision = 'wait';
-        if ((ultimo.quantidade >= 2) && (penultimo.quantidade >= 2)) {
+        if (ultimo.quantidade >= 2) {
             if (ultimo.direcao == 'subindo') {
 
                 var closeRatio = ultimo.valorFim / penultimo.valorInicio;
