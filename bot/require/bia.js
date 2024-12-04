@@ -210,11 +210,11 @@ const bia = {
                 var fibonacciLevels = bia.calculateFibonacciLevelsWithTrend(penultimo.valorInicio,penultimo.valorFim);
                 console.log(`Fibonacci levels between:`, fibonacciLevels);
 
-                if (closeRatio <= 0.9995) {
+                // if (closeRatio >= 0.9995) {
                     if (ultimo.valorFim <= fibonacciLevels.levels[0]) {
                         decision = 'buy'
                     }
-                }
+                // }
             }
         }
         console.log(decision);
