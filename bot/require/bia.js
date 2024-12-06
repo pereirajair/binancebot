@@ -135,7 +135,7 @@ const bia = {
     },
     getCalculatedDecision: async function(symbol,averageBuyPrice) {
         const endTime = Date.now();
-        const startTime = endTime - 6 * 60 * 60 * 1000; // 3 horas em milissegundos
+        const startTime = endTime - 24 * 60 * 60 * 1000; // 3 horas em milissegundos
 
         const candles = await bia.exchange.candles({
             symbol: symbol,      
@@ -176,119 +176,100 @@ const bia = {
         console.log('Average: ' + average);
 
     
-        const fatorComparacao = 0.8;
-        const resultado = bia.detectUpAndDownTrends(closeNumbers, fatorComparacao);
+        const fatorComparacao = 0.997;
+        var decision = 'wait';
+        // const resultado = detectUpAndDownTrends(closeNumbers, fatorComparacao);
+        const trends = bia.detectTrends(closeNumbers,fatorComparacao);
+        const resultado = bia.groupTrends(trends);
         console.log(resultado);
 
-        let penultimo = resultado[resultado.length - 2];
-        let ultimo = resultado[resultado.length - 1];
+        if (resultado != false) {
+            let penultimo = resultado[resultado.length - 2];
+            let ultimo = resultado[resultado.length - 1];
 
-        var decision = 'wait';
-        if (ultimo.quantidade >= 2) {
-            if (ultimo.direcao == 'subindo') {
+            
+            if (ultimo.trend == 'uptrend') {
 
-                var closeRatio = ultimo.valorFim / penultimo.valorInicio;
-
-                console.log('CloseRatio: ' + closeRatio);
-
-                var fibonacciLevels = bia.calculateFibonacciLevelsWithTrend(penultimo.valorInicio,penultimo.valorFim);
+                var fibonacciLevels = bia.calculateFibonacciLevelsWithTrend(penultimo.startValue,penultimo.endValue);
                 console.log(`Fibonacci levels between:`, fibonacciLevels);
 
-                // if (ultimo.valorFim >= averageBuyPrice) {
-                    if (closeRatio >= 1.0005) {
-                        if (ultimo.valorFim >= fibonacciLevels.levels[0]) {
-                            decision = 'sell'
-                        }
-                    }
-                // }
+                if (ultimo.endValue >= fibonacciLevels.levels[0]) {
+                    decision = 'sell'
+                }
 
             } else {
+                if (ultimo.count >= 2) {
 
-                var closeRatio = penultimo.valorInicio / ultimo.valorFim;
-                console.log('CloseRation: ' + closeRatio);
+                    var fibonacciLevels = bia.calculateFibonacciLevelsWithTrend(penultimo.startValue,penultimo.endValue);
+                    console.log(`Fibonacci levels between:`, fibonacciLevels);
 
-                var fibonacciLevels = bia.calculateFibonacciLevelsWithTrend(penultimo.valorInicio,penultimo.valorFim);
-                console.log(`Fibonacci levels between:`, fibonacciLevels);
-
-                // if (closeRatio >= 0.9995) {
-                    if (ultimo.valorFim <= fibonacciLevels.levels[0]) {
+                    if (ultimo.endValue <= fibonacciLevels.levels[0]) {
                         decision = 'buy'
                     }
-                // }
+                }
             }
         }
         console.log(decision);
         return decision;
     },
-    detectUpAndDownTrends: function(numeros, fatorComparacao) {
-        const resultados = [];
-        let direcaoAtual = null; // "subindo" ou "descendo"
-        let inicioIntervalo = 0; // Índice do início da alta ou baixa
-        let ultimaQuantidade = 0; // Quantidade de números na última direção dominante
+    detectTrends: function(numbers, factor) {
+        if (numbers.length < 2) {
+            return []; // Sem dados suficientes para determinar a tendência
+        }
     
-        for (let i = 1; i < numeros.length; i++) {
-            if (numeros[i] > numeros[i - 1]) { // Está subindo
-                if (direcaoAtual !== "subindo") {
-                    // console.log(`DESCENDO: VALOR: ${ultimaQuantidade * fatorComparacao}, ATUAL: ${numeros[i]}`);
-                    if (direcaoAtual === "descendo" && ultimaQuantidade * fatorComparacao > numeros[i]) {
-                        // Ignora subida curta e considera parte da descida
-                        continue;
-                    }
-                    // Finaliza a descida anterior
-                    if (direcaoAtual) {
-                        resultados.push({
-                            direcao: direcaoAtual,
-                            inicio: inicioIntervalo,
-                            valorInicio: numeros[inicioIntervalo],
-                            valorFim: numeros[i - 1],
-                            fim: i - 1,
-                            quantidade: i - inicioIntervalo - 1
-                        });
-                        ultimaQuantidade = numeros[i - 1];
-                    }
-                    // Muda a direção para "subindo"
-                    direcaoAtual = "subindo";
-                    inicioIntervalo = i - 1;
-                }
-            } else if (numeros[i] < numeros[i - 1]) { // Está descendo
-                if (direcaoAtual !== "descendo") {
-                    // console.log(`SUBINDO: VALOR: ${ultimaQuantidade * fatorComparacao}, ATUAL: ${numeros[i]}`);
-                    if (direcaoAtual === "subindo" && ultimaQuantidade * fatorComparacao > numeros[i]) {
-                        // Ignora descida curta e considera parte da subida
-                        continue;
-                    }
-                    // Finaliza a subida anterior
-                    if (direcaoAtual) {
-                        resultados.push({
-                            direcao: direcaoAtual,
-                            inicio: inicioIntervalo,
-                            valorInicio: numeros[inicioIntervalo],
-                            valorFim: numeros[i - 1],
-                            fim: i - 1,
-                            quantidade: i - inicioIntervalo - 1
-                        });
-                        ultimaQuantidade = numeros[i - 1];
-                    }
-                    // Muda a direção para "descendo"
-                    direcaoAtual = "descendo";
-                    inicioIntervalo = i - 1;
+        const trends = []; // Array para armazenar a tendência
+        let currentTrend = null; // Tendência atual: "uptrend", "downtrend" ou null
+    
+        for (let i = 1; i < numbers.length; i++) {
+            const diff = numbers[i] - numbers[i - 1];
+            const significantChange = Math.abs(diff) > Math.abs(numbers[i - 1] * (1 - factor));
+    
+            // console.log(Math.abs(diff) + ' - ' + Math.abs(numbers[i - 1] * (1 - factor)));
+            // console.log(significantChange);
+            const valor = numbers[i];
+    
+            if (significantChange) {
+                if (diff > 0) {
+                    currentTrend = "uptrend";
+                } else if (diff < 0) {
+                    currentTrend = "downtrend";
                 }
             }
+            trends.push({ trend: currentTrend, valor: valor });
         }
     
-        // Finaliza o último intervalo
-        if (direcaoAtual) {
-            resultados.push({
-                direcao: direcaoAtual,
-                inicio: inicioIntervalo,
-                valorInicio: numeros[inicioIntervalo],
-                valorFim: numeros[numeros.length - 1],
-                fim: numeros.length - 1,
-                quantidade: numeros.length - inicioIntervalo - 1
-            });
+        return trends;
+    },
+    groupTrends: function(data) {
+        const groupedTrends = [];
+        let currentGroup = null;
+    
+        data.forEach((item, index) => {
+            if (!currentGroup || currentGroup.trend !== item.trend) {
+                // Push the previous group to the result if it exists
+                if (currentGroup) {
+                    currentGroup.endValue = data[index - 1].valor;
+                    groupedTrends.push(currentGroup);
+                }
+                // Start a new group
+                currentGroup = {
+                    trend: item.trend,
+                    startValue: item.valor,
+                    count: 1, // Initialize count
+                };
+            } else {
+                // Increment count if the trend continues
+                currentGroup.count++;
+            }
+        });
+    
+        // Add the last group to the result
+        if (currentGroup) {
+            currentGroup.endValue = data[data.length - 1].valor;
+            groupedTrends.push(currentGroup);
         }
     
-        return resultados;
+        return groupedTrends;
     },
     calculateFibonacciLevelsWithTrend: function(start, end) {
         // Detect trend
