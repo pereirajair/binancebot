@@ -203,9 +203,16 @@ const bia = {
                     var fibonacciLevels = bia.calculateFibonacciLevelsWithTrend(penultimo.startValue,penultimo.endValue);
                     console.log(`Fibonacci levels between:`, fibonacciLevels);
 
-                    if (ultimo.endValue <= fibonacciLevels.levels[0]) {
-                        decision = 'buy'
+                    if (ultimo.startValue <= ultimo.endValue) { //UPTREND
+                        if (ultimo.endValue <= fibonacciLevels.levels[0]) {
+                            decision = 'sell'
+                        }
+                    } else {
+                        if (ultimo.endValue <= fibonacciLevels.levels[0]) {
+                            decision = 'buy'
+                        }
                     }
+
                 }
             }
         }
@@ -382,6 +389,18 @@ const bia = {
         //         _capital = bia.eth;
         //     }
         // }
+        bia.buyPrices = [];
+        if (bia.options.auto_capital_divisor > 1) {
+            var lastBuyPrice = coin.format(coin.calculateMinValueForPrice(bia.buyPrice,(bia.options.stop_loss1)),0);
+            for (var i = 2; i <= bia.options.auto_capital_divisor; i++) {
+
+                bia.buyPrices.push(lastBuyPrice);
+                lastBuyPrice = coin.format(coin.calculateMinValueForPrice(lastBuyPrice,(bia.options.stop_loss1)),0);
+            }
+        }
+        console.log('BUY PRICESSSSS');
+        console.log(bia.buyPrices);
+        
         coin.setCapital(_capital);
         coin.setCoinPrice(bia.buyPrice);
         bia.sellPrice = coin.format(coin.calculateMinValueForPrice(bia.buyPrice,(bia.options.proffit),0));
@@ -417,7 +436,7 @@ const bia = {
                 // if ((coinPrice - bia.avgPrice) <= 150) {
                 //     bia.sellOrderPrice = bia.avgPrice + 50;
                 // } else {
-                //     bia.sellOrderPrice = ((coinPrice + bia.avgPrice) / 2);
+                bia.sellOrderPrice = ((coinPrice + bia.avgPrice) / 2);
                 // }
 
                 // bia.sellOrderPrice = bia.coinPrice - bia.
@@ -453,7 +472,7 @@ const bia = {
             } else {
                 
                 bia.qtdWaitSell = 0;
-                return await bia.createOrder('sell_order','sell',bia.symbol,coin.format(bia.totalamount,bia.precision),coin.format(bia.sellOrderPrice,2),_type);
+                return await bia.createOrder('sell_order','sell',bia.symbol,coin.format(bia.totalamount,bia.precision),coin.format(bia.sellOrderPrice,0),_type);
             }
             
         }
@@ -521,7 +540,7 @@ const bia = {
                 bia.totalamount = bia.totalamount - order.origQty;
             }
         }
-        if (signal == 'buy_order_2') {
+        if ((signal == 'buy_order_2') || (signal == 'buy_order_3') || (signal == 'buy_order_4') || (signal == 'buy_order_5') || (signal == 'buy_order_6') || (signal == 'buy_order_7') || (signal == 'buy_order_8') || (signal == 'buy_order_9') || (signal == 'buy_order_10')) {
             if (order.status == 'FILLED') {
 
                 //REMOVE A ORDEM DE VENDA ATUAL SE ELA EXISTIR.
@@ -533,8 +552,7 @@ const bia = {
                 await bia.callStatus('create_sell');
             }
             if (order.status == 'CANCELED') {
-
-                await bia.orders.removeOrderBySignal('buy_order');
+                await bia.removeAllBuyOrders();
                 await bia.sendMessage('<b>ORDEM DE COMPRA 2 CANCELADA.</b>');
                 await bia.callStatus('none');
             }
@@ -546,7 +564,7 @@ const bia = {
                 await bia.sendMessage(bot.msgHasBought(order));
             }
             if (order.status == 'CANCELED') {
-                await bia.orders.removeOrderBySignal('buy_order_2');
+                await bia.removeAllBuyOrders();
                 await bia.sendMessage('BUY ORDER REMOVED.');
                 await bia.callStatus('none');  
             }
@@ -592,7 +610,7 @@ const bia = {
 
                     //NAO PERDE MAIS, PODE REMOVER A SEGUNDA COMPRA.
                     if (bia.options.auto_capital_divisor > 1) {
-                        await bia.orders.removeOrderBySignal('buy_order_2');
+                        await bia.removeAllBuyOrders();
                     }
 
                     await bia.createOrder('sell_order','sell',bia.symbol,coin.format(bia.totalamount,bia.precision),coin.format(bia.sellOrderPrice,0),"STOP_LOSS_LIMIT");
@@ -604,17 +622,24 @@ const bia = {
             }
         }
     },
+    removeAllBuyOrders: async function() {
+        await bia.orders.removeOrderBySignal('buy_order');
+        for (var i in bia.buyPrices) {
+            await bia.orders.removeOrderBySignal('buy_order_' + (i + 2));
+        }
+        return true;
+    },
     statusWaitSell: async function () {
         bia.log('bia.statusWaitSell()');
         if (bia.status == 'wait_sell') {
             bia.qtdWaitSell = bia.qtdWaitSell + 1;
 
-            let newSellOrderPrice = coin.format(((bia.coinPrice + bia.buyPrice) / 2),0);
-            if ((bia.coinPrice - bia.avgPrice) <= 30) {
-                newSellOrderPrice = bia.avgPrice + bia.options.sell_difference;
-            } else {
-                newSellOrderPrice = ((bia.coinPrice + bia.avgPrice) / 2);
-            }
+            let newSellOrderPrice = coin.format(((bia.coinPrice + bia.avgPrice) / 2),0);
+            // if ((bia.coinPrice - bia.avgPrice) <= 30) {
+            //     newSellOrderPrice = bia.avgPrice + bia.options.sell_difference;
+            // } else {
+            // newSellOrderPrice = ((bia.coinPrice + bia.avgPrice) / 2);
+            // }
 
             if (newSellOrderPrice > bia.sellOrderPrice) {
 
@@ -660,11 +685,18 @@ const bia = {
 
             let _order2;
 
+            let _ordersStr = JSON.stringify(_order) + '\n\n';
+
             if (bia.options.auto_capital_divisor > 1) {
-                _order2 = await bia.createOrder('buy_order_2','buy',bia.symbol,bia.amount,bia.stopLossPrice1);
+                let currentOrder;
+                // console.log(bia.buyPrices);
+                for (var i in bia.buyPrices) {
+                   currentOrder = await bia.createOrder('buy_order_' + (i + 2),'buy',bia.symbol,bia.amount,bia.buyPrices[i]);
+                }
+                _ordersStr = _ordersStr + JSON.stringify(currentOrder) + '\n\n'
             }
 
-            bia.sendMessage('<b>CREATING BUY ORDERS.</b>' + JSON.stringify(_order) + '' + JSON.stringify(_order2));
+            bia.sendMessage('<b>CREATING BUY ORDERS.</b>\n\n' + _ordersStr);
         }
     },
     statusWaitBuy: async function () {
@@ -673,8 +705,7 @@ const bia = {
             bia.qtdWaitBuy = bia.qtdWaitBuy + 1;
 
             if (bia.qtdWaitBuy >= bia.options.buy_max_wait) {
-                await bia.orders.removeOrderBySignal('buy_order');
-                await bia.orders.removeOrderBySignal('buy_order_2');
+                await bia.removeAllBuyOrders();
                 bia.qtdWaitBuy = 0;
                 bia.status = 'create_buy';
             }
@@ -685,6 +716,7 @@ const bia = {
         if ((bia.paused == false) &&  (bia.purchased == false) && (bia.status == 'none')) {
             let decision = await bia.getAIDecision(bia.symbol);
             bia.lastAIdecision = decision;
+            decision = 'buy';
             if (decision == 'buy') {  
                 bia.callStatus('create_buy');  
             }
