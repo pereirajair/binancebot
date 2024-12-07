@@ -716,7 +716,6 @@ const bia = {
         if ((bia.paused == false) &&  (bia.purchased == false) && (bia.status == 'none')) {
             let decision = await bia.getAIDecision(bia.symbol);
             bia.lastAIdecision = decision;
-            decision = 'buy';
             if (decision == 'buy') {  
                 bia.callStatus('create_buy');  
             }
