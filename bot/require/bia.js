@@ -176,7 +176,7 @@ const bia = {
         console.log('Average: ' + average);
 
     
-        const fatorComparacao = 0.997;
+        const fatorComparacao = 0.999;
         var decision = 'wait';
         // const resultado = detectUpAndDownTrends(closeNumbers, fatorComparacao);
         const trends = bia.detectTrends(closeNumbers,fatorComparacao);
@@ -463,7 +463,7 @@ const bia = {
         if (bia.purchased == true) {
             if (bia.coinPrice <= bia.stopLossPrice4) { 
                 await bia.createSellOrder(bia.coinPrice,'stop_loss_4');
-                bot.cmdPause();
+                // bot.cmdPause();
             } else {
                 //STOP LOSS 3
                 if ((bia.coinPrice <= bia.stopLossPrice3) && (bia.status != 'wait_stop_loss_3')) { 

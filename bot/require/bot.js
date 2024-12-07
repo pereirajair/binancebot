@@ -201,6 +201,7 @@ const bot = {
             this.bia.status = 'none';
             this.bia.totalamount = 0;
             this.bia.avgPrice = 0;
+            this.bia.purchased = false;
         } else {
             await this.bia.orders.removeOpenOrders(this.bia.symbol);
             this.bia.status = 'none';
