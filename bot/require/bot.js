@@ -126,7 +126,7 @@ const bot = {
         //         capital = this.bia.busd;
         //     }
         // }
-        let _precision = 5;
+        let _precision = 4;
         if (this.bia.symbol == 'ETHBRL') {
         //     if (capital > this.bia.brl) {
         //         capital = this.bia.brl;
@@ -136,7 +136,7 @@ const bot = {
         
         
         let _price = this.bia.coinPrice - this.bia.options.buy_difference;
-        let _amount = coin.format(coin.getCoinAmount(Number.parseFloat(capital),_price,5),_precision);
+        let _amount = coin.format(coin.getCoinAmount(Number.parseFloat(capital),_price,_precision),_precision);
 
         if (orderType == "TAKE_PROFIT_LIMIT") {
             await this.bia.createOrder('extra_buy_order','buy',this.bia.symbol,_amount,_price);

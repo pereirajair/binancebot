@@ -106,14 +106,14 @@ const orders = {
 
         return _order;
     },
-    sell: async function(symbol,amount,price,signal,type = "STOP_LOSS_LIMIT") {
+    sell: async function(symbol,amount,price,signal,type = "STOP_LOSS_LIMIT",stop_loss_difference) {
         console.log('SELL ORDER: ' + symbol + ' QTD: ' + amount + ' PRICE: ' + price);
         let _stopPrice = price;
         let _sellPrice = price;
         var options = {};
         if (type == 'STOP_LOSS_LIMIT') {
             _stopPrice = price;
-            _sellPrice = price - 20;
+            _sellPrice = price - stop_loss_difference;
 
             options = {
                 symbol: symbol,
